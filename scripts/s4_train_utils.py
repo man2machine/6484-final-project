@@ -255,6 +255,42 @@ class SequenceLightningModule(pl.LightningModule):
             sync_dist=True,
         )
 
+    def on_validation_epoch_start(self):
+        # Reset all validation torchmetrics
+        for name in self.val_loader_names:
+            self.task._reset_torchmetrics(name)
+
+    def validation_epoch_end(self, outputs):
+        # Log all validation torchmetrics
+        super().validation_epoch_end(outputs)
+        for name in self.val_loader_names:
+            self.log_dict(
+                {f"{name}/{k}": v for k, v in self.task.get_torchmetrics(name).items()},
+                on_step=False,
+                on_epoch=True,
+                prog_bar=True,
+                add_dataloader_idx=False,
+                sync_dist=True,
+            )
+
+    def on_test_epoch_start(self):
+        # Reset all test torchmetrics
+        for name in self.test_loader_names:
+            self.task._reset_torchmetrics(name)
+
+    def test_epoch_end(self, outputs):
+        # Log all test torchmetrics
+        super().test_epoch_end(outputs)
+        for name in self.test_loader_names:
+            self.log_dict(
+                {f"{name}/{k}": v for k, v in self.task.get_torchmetrics(name).items()},
+                on_step=False,
+                on_epoch=True,
+                prog_bar=True,
+                add_dataloader_idx=False,
+                sync_dist=True,
+            )
+
     def training_step(self, batch, batch_idx):
         loss = self._shared_step(batch, batch_idx, prefix="train")
 
@@ -288,6 +324,26 @@ class SequenceLightningModule(pl.LightningModule):
         )
 
         return loss
+
+    def validation_step(self, batch, batch_idx, dataloader_idx=0):
+        ema = (
+            self.val_loader_names[dataloader_idx].endswith("/ema")
+            and self.optimizers().optimizer.stepped
+        )  # There's a bit of an annoying edge case with the first (0-th) epoch; it has to be excluded due to the initial sanity check
+        if ema:
+            self.optimizers().swap_ema()
+        loss = self._shared_step(
+            batch, batch_idx, prefix=self.val_loader_names[dataloader_idx]
+        )
+        if ema:
+            self.optimizers().swap_ema()
+
+        return loss
+
+    def test_step(self, batch, batch_idx, dataloader_idx=0):
+        return self._shared_step(
+            batch, batch_idx, prefix=self.test_loader_names[dataloader_idx]
+        )
 
     def configure_optimizers(self):
 
@@ -358,6 +414,34 @@ class SequenceLightningModule(pl.LightningModule):
         else:
             return [prefix], [loaders]
 
+    def _eval_dataloaders(self):
+        # Return all val + test loaders
+        val_loaders = self.dataset.val_dataloader(**self.hparams.loader)
+        test_loaders = self.dataset.test_dataloader(**self.hparams.loader)
+        val_loader_names, val_loaders = self._eval_dataloaders_names(val_loaders, "val")
+        test_loader_names, test_loaders = self._eval_dataloaders_names(
+            test_loaders, "test"
+        )
+
+        # Duplicate datasets for ema
+        if self.hparams.train.ema > 0.0:
+            val_loader_names += [name + "/ema" for name in val_loader_names]
+            val_loaders = val_loaders + val_loaders
+            test_loader_names += [name + "/ema" for name in test_loader_names]
+            test_loaders = test_loaders + test_loaders
+
+        return val_loader_names + test_loader_names, val_loaders + test_loaders
+
+    def val_dataloader(self):
+        val_loader_names, val_loaders = self._eval_dataloaders()
+        self.val_loader_names = val_loader_names
+        return val_loaders
+
+    def test_dataloader(self):
+        test_loader_names, test_loaders = self._eval_dataloaders()
+        self.test_loader_names = ["final/" + name for name in test_loader_names]
+        return test_loaders
+
 
 ### pytorch-lightning utils and entrypoint
 
@@ -416,6 +500,40 @@ def train(config):
         trainer.test(model)
 
 
+def benchmark_step(config):
+    """Utility function to benchmark speed of 'stepping', i.e. recurrent view. Unused for main train logic"""
+    pl.seed_everything(config.train.seed, workers=True)
+
+    model = SequenceLightningModule(config)
+    model.setup()
+    model.to("cuda")
+    print("Num Parameters: ", sum(p.numel() for p in model.parameters()))
+    print(
+        "Num Trainable Parameters: ",
+        sum(p.numel() for p in model.parameters() if p.requires_grad),
+    )
+    model._on_post_move_to_device()
+
+    for module in model.modules():
+        if hasattr(module, "setup_step"):
+            module.setup_step()
+    model.eval()
+
+    val_dataloaders = model.val_dataloader()
+    dl = val_dataloaders[0] if utils.is_list(val_dataloaders) else val_dataloaders
+
+    import benchmark
+
+    for batch in dl:
+        benchmark.utils.benchmark(
+            model.forward_recurrence,
+            batch,
+            config.train.benchmark_step_k,
+            T=config.train.benchmark_step_T,
+        )
+        break
+
+
 @hydra.main(config_path="configs", config_name="config.yaml")
 def main(config: OmegaConf):
 
@@ -427,6 +545,10 @@ def main(config: OmegaConf):
 
     # Pretty print config using Rich library
     utils.train.print_config(config, resolve=True)
+
+    if config.train.benchmark_step:
+        benchmark_step(config)
+        exit()
 
     train(config)
 

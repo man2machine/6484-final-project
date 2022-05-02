@@ -794,6 +794,10 @@ class S4(nn.Module):
         """
 
         super().__init__()
+        if verbose:
+            import src.utils.train
+            log = src.utils.train.get_logger(__name__)
+            log.info(f"Constructing S4 (H, N, L) = ({d_model}, {d_state}, {l_max})")
 
         self.h = d_model
         self.n = d_state
