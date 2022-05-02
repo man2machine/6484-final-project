@@ -1,4 +1,5 @@
 # Packages
+outputs/*
 packages/*
 dt_runs/*.csv
 dt_runs/*.pt
