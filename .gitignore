@@ -3,7 +3,7 @@ outputs/*
 packages/*
 dt_runs/*.csv
 dt_runs/*.pt
-data/*.pkl
+data/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -16,3 +16,4 @@ encoder: linear
 decoder:
   _name_: sequence
   mode: pool
+
