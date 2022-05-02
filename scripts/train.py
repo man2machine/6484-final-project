@@ -15,8 +15,11 @@ from torch.utils.data import DataLoader
 from models.utils import D4RLTrajectoryDataset, evaluate_on_env, get_d4rl_normalized_score
 from models.dt_model import DecisionTransformer
 
+def train_s4(args):
+    
+    pass
 
-def train(args):
+def train_dt(args):
 
     dataset = args.dataset          # medium / medium-replay / medium-expert
     rtg_scale = args.rtg_scale      # normalize returns to go
@@ -246,11 +249,19 @@ def train(args):
     print("saved last updated model at: " + save_model_path)
     print("=" * 60)
 
-
+def train(args):
+    if args.model_type == "dt":
+        train_dt(args)
+    elif args.model_type == "s4":
+        train_s4(args)
+    else:
+        raise ValueError("Invalid argument value. Please use a valid model_type: dt or s4")
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
+
+    parser.add_argument('--model_type', type=str, default='dt')
 
     parser.add_argument('--env', type=str, default='halfcheetah')
     parser.add_argument('--dataset', type=str, default='medium')

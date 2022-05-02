@@ -21,7 +21,7 @@ def download_d4rl_data():
 		for dataset_type in ['medium', 'medium-expert', 'medium-replay']:
 
 		    name = f'{env_name}-{dataset_type}-v2'
-		    pkl_file_path = os.path.join(data_dir, name)
+			pkl_file_path = os.path.join(data_dir, name)
 
 		    print("processing: ", name)
 
