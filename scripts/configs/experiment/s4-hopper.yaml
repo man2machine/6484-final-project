@@ -1,0 +1,8 @@
+# @package _global_
+defaults:
+  - /pipeline: hopper
+  - /model: s4
+
+model:
+  transposed: False
+  
