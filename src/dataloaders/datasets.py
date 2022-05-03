@@ -328,7 +328,7 @@ class GymHopper(SequenceDataset):
     _name_ = "hopper"
     d_input = 15 # 1 for reward, 11 for state dim, 3 for action dim
     d_output = 3 # 3 for action dim
-    l_output = 20
+    l_output = None
     rtg_scale = 1000
     rtg_sparse_flag = False
     L = 20

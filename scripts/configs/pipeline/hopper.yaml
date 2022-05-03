@@ -12,5 +12,8 @@ train:
   mode: min
 
 encoder: linear
-decoder: sequence
 
+decoder:
+  _name_: sequence
+  mode: last
+  
