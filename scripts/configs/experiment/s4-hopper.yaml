@@ -5,8 +5,10 @@ defaults:
 
 model:
   transposed: False
-  d_model: 2
+  d_model: 128
 
 trainer:
   max_epochs: 2000
-  
+
+loader:
+  batch_size: 100

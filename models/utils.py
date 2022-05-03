@@ -247,7 +247,7 @@ class S4D4RLTrajectoryDataset(D4RLTrajectoryDataset):
         returns_to_go = torch.from_numpy(traj['returns_to_go'][si : si + self.context_len][:, np.newaxis])
         states = torch.from_numpy(traj['observations'][si : si + self.context_len])
         actions = torch.from_numpy(traj['actions'][si : si + self.context_len])
-        combined_rsa = torch.cat((returns_to_go, states, actions), dim=-1)
+        combined_rs = torch.cat((returns_to_go, states), dim=-1)
         # print(combined_rsa.size())
-        return combined_rsa, actions
+        return combined_rs, actions
 
