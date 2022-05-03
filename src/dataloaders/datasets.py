@@ -19,6 +19,7 @@ from einops.layers.torch import Rearrange, Reduce
 from einops import rearrange
 import torchtext
 from datasets import load_dataset, DatasetDict, Value
+from models.utils import D4RLTrajectoryDataset, S4D4RLTrajectoryDataset
 
 # from pytorch_lightning import LightningDataModule
 
@@ -155,13 +156,12 @@ class SequenceDataset:
         # train, val, test datasets must be set by class instantiation
         self.dataset_train = None
         self.dataset_val = None
-        self.dataset_test = None
 
     def init(self):
         pass
 
     def setup(self):
-        """This method should set self.dataset_train, self.dataset_val, and self.dataset_test"""
+        """This method should set self.dataset_train and self.dataset_val"""
         raise NotImplementedError
 
     def split_train_val(self, val_split):
@@ -221,9 +221,6 @@ class SequenceDataset:
 
     def val_dataloader(self, **kwargs):
         return self._eval_dataloader(self.dataset_val, **kwargs)
-
-    def test_dataloader(self, **kwargs):
-        return self._eval_dataloader(self.dataset_test, **kwargs)
 
     def _eval_dataloader(self, dataset, train_resolution, eval_resolutions, **kwargs):
         if eval_resolutions is None:
@@ -311,10 +308,35 @@ class MNIST(SequenceDataset):
             download=True,
             transform=transform,
         )
-        self.dataset_test = torchvision.datasets.MNIST(
+        self.split_train_val(self.val_split)
+
+    def __str__(self):
+        return f"{'p' if self.permute else 's'}{self._name_}"
+
+
+class GymHopper(SequenceDataset):
+    _name_ = "hopper"
+    d_input = 15 # 1 for reward, 11 for state dim, 3 for action dim
+    d_output = 3 # 3 for action dim
+    l_output = None
+    rtg_scale = 1000
+    rtg_sparse_flag = False
+    L = 20
+
+    @property
+    def init_defaults(self):
+        return {
+            "val_split": 0.1,
+            "seed": 42,  # For train/val split
+        }
+
+    def setup(self):
+        self.data_dir = default_data_path / "hopper-medium-v2.pkl"
+        self.dataset_train = S4D4RLTrajectoryDataset(
             self.data_dir,
-            train=False,
-            transform=transform,
+            context_len=self.L,
+            rtg_scale=self.rtg_scale,
+            rtg_sparse_flag=self.rtg_sparse_flag,
         )
         self.split_train_val(self.val_split)
 

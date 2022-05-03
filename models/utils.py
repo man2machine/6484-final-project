@@ -238,47 +238,15 @@ class S4D4RLTrajectoryDataset(D4RLTrajectoryDataset):
     def __getitem__(self, idx):
         traj = self.trajectories[idx]
         traj_len = traj['observations'].shape[0]
+        si = 0
 
         if traj_len >= self.context_len:
             # sample random index to slice trajectory
             si = random.randint(0, traj_len - self.context_len)
-
-            states = torch.from_numpy(traj['observations'][si : si + self.context_len])
-            actions = torch.from_numpy(traj['actions'][si : si + self.context_len])
-            returns_to_go = torch.from_numpy(traj['returns_to_go'][si : si + self.context_len])
-            timesteps = torch.arange(start=si, end=si+self.context_len, step=1)
-
-            # all ones since no padding
-            traj_mask = torch.ones(self.context_len, dtype=torch.long)
-
-        else:
-            padding_len = self.context_len - traj_len
-
-            # padding with zeros
-            states = torch.from_numpy(traj['observations'])
-            states = torch.cat([states,
-                                torch.zeros(([padding_len] + list(states.shape[1:])),
-                                dtype=states.dtype)],
-                               dim=0)
-
-            actions = torch.from_numpy(traj['actions'])
-            actions = torch.cat([actions,
-                                torch.zeros(([padding_len] + list(actions.shape[1:])),
-                                dtype=actions.dtype)],
-                               dim=0)
-
-            returns_to_go = torch.from_numpy(traj['returns_to_go'])
-            returns_to_go = torch.cat([returns_to_go,
-                                torch.zeros(([padding_len] + list(returns_to_go.shape[1:])),
-                                dtype=returns_to_go.dtype)],
-                               dim=0)
-
-            timesteps = torch.arange(start=0, end=self.context_len, step=1)
-
-            traj_mask = torch.cat([torch.ones(traj_len, dtype=torch.long),
-                                   torch.zeros(padding_len, dtype=torch.long)],
-                                  dim=0)
-
-        return  timesteps, states, actions, returns_to_go, traj_mask
-
         
+        returns_to_go = torch.from_numpy(traj['returns_to_go'][si : si + self.context_len])
+        states = torch.from_numpy(traj['observations'][si : si + self.context_len])
+        actions = torch.from_numpy(traj['actions'][si : si + self.context_len])
+        combined_rsa = torch.cat((returns_to_go, states, actions), dim=1)
+        return combined_rsa, actions
+

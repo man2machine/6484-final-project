@@ -210,4 +210,4 @@ def resume_manual(config):
     trainer.lr_schedulers = lr_schedulers
     # trainer.restore_training_state(checkpoint) # Found in https://github.com/PyTorchLightning/pytorch-lightning/issues/2613 but doesn't work anymore
 
-    trainer.test(trainer.model)
+    # trainer.test(trainer.model)
