@@ -80,7 +80,11 @@ def train_dt(dt_flag, args):
     start_time = datetime.now().replace(microsecond=0)
     start_time_str = start_time.strftime("%y-%m-%d-%H-%M-%S")
 
-    prefix = "dt_" + env_d4rl_name
+    prefix = env_d4rl_name
+    if dt_flag:
+        prefix = "dt_" + env_d4rl_name
+    else:
+        prefix = "s4_dt_" + env_d4rl_name
 
     if rtg_sparse_flag:
         save_model_name =  prefix + "_sparse_model_" + start_time_str + ".pt"
@@ -261,7 +265,7 @@ def train_dt(dt_flag, args):
 
 def train(args):
     if args.model_type == "dt" or args.model_type == "s4":
-        train_dt(args)
+        train_dt(args.model_type == "dt", args)
     else:
         raise ValueError("Invalid argument value. Please use a valid model_type: dt or s4")
 
