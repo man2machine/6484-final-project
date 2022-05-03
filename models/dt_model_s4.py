@@ -17,7 +17,7 @@ import torch.nn.functional as F
 from models.s4 import S4
 
 class S4DecisionTransformer(nn.Module):
-    def __init__(self, s4_d_state, state_dim, act_dim, h_dim, context_len, drop_p, max_timestep=4096, s4_transposed=False):
+    def __init__(self, s4_d_state, state_dim, act_dim, h_dim, context_len, drop_p, max_timestep=4096, transposed=False):
         super().__init__()
 
         self.state_dim = state_dim
@@ -25,7 +25,7 @@ class S4DecisionTransformer(nn.Module):
         self.h_dim = h_dim
 
         ### transformer blocks
-        self.S4 = S4(d_model=self.h_dim, d_state=s4_d_state, l_max=3*context_len, dropout=drop_p, transposed=s4_transposed)
+        self.S4 = S4(d_model=self.h_dim, d_state=s4_d_state, l_max=3*context_len, dropout=drop_p, transposed=transposed)
 
         ### projection heads (project to embedding)
         self.embed_ln = nn.LayerNorm(h_dim)
