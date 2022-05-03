@@ -69,7 +69,7 @@ class S4DecisionTransformer(nn.Module):
         h = self.embed_ln(h)
 
         # transformer and prediction
-        h = self.S4(h)
+        h, _ = self.S4(h)
 
         # get h reshaped such that its size = (B x 3 x T x h_dim) and
         # h[:, 0, t] is conditioned on r_0, s_0, a_0 ... r_t
