@@ -156,12 +156,13 @@ class SequenceDataset:
         # train, val, test datasets must be set by class instantiation
         self.dataset_train = None
         self.dataset_val = None
+        self.dataset_test = None
 
     def init(self):
         pass
 
     def setup(self):
-        """This method should set self.dataset_train and self.dataset_val"""
+        """This method should set self.dataset_train, self.dataset_val, and self.dataset_test"""
         raise NotImplementedError
 
     def split_train_val(self, val_split):
@@ -222,6 +223,9 @@ class SequenceDataset:
     def val_dataloader(self, **kwargs):
         return self._eval_dataloader(self.dataset_val, **kwargs)
 
+    def test_dataloader(self, **kwargs):
+        return self._eval_dataloader(self.dataset_test, **kwargs)
+
     def _eval_dataloader(self, dataset, train_resolution, eval_resolutions, **kwargs):
         if eval_resolutions is None:
             eval_resolutions = [1]
@@ -269,6 +273,7 @@ class SequenceDataset:
         return self._name_
 
 
+
 class MNIST(SequenceDataset):
     _name_ = "mnist"
     d_input = 1
@@ -308,6 +313,11 @@ class MNIST(SequenceDataset):
             download=True,
             transform=transform,
         )
+        self.dataset_test = torchvision.datasets.MNIST(
+            self.data_dir,
+            train=False,
+            transform=transform,
+        )
         self.split_train_val(self.val_split)
 
     def __str__(self):
@@ -339,6 +349,13 @@ class GymHopper(SequenceDataset):
             rtg_sparse_flag=self.rtg_sparse_flag,
         )
         self.split_train_val(self.val_split)
+        
+        self.dataset_test = S4D4RLTrajectoryDataset(
+            self.data_dir,
+            context_len=self.L,
+            rtg_scale=self.rtg_scale,
+            rtg_sparse_flag=self.rtg_sparse_flag,
+        )
 
     def __str__(self):
         return f"{'p' if self.permute else 's'}{self._name_}"
