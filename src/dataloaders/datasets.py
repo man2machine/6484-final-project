@@ -326,7 +326,7 @@ class MNIST(SequenceDataset):
 
 class GymHopper(SequenceDataset):
     _name_ = "hopper"
-    d_input = 15 # 1 for reward, 11 for state dim, 3 for action dim
+    d_input = 12 # 1 for reward, 11 for state dim
     d_output = 3 # 3 for action dim
     l_output = None
     rtg_scale = 1000
