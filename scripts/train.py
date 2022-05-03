@@ -14,12 +14,9 @@ from torch.utils.data import DataLoader
 
 from models.utils import D4RLTrajectoryDataset, evaluate_on_env, get_d4rl_normalized_score
 from models.dt_model import DecisionTransformer
+from models.dt_model_s4 import S4DecisionTransformer
 
-def train_s4(args):
-    
-    pass
-
-def train_dt(args):
+def train_dt(dt_flag, args):
 
     dataset = args.dataset          # medium / medium-replay / medium-expert
     rtg_scale = args.rtg_scale      # normalize returns to go
@@ -131,15 +128,28 @@ def train_dt(args):
     state_dim = env.observation_space.shape[0]
     act_dim = env.action_space.shape[0]
 
-    model = DecisionTransformer(
-                state_dim=state_dim,
-                act_dim=act_dim,
-                n_blocks=n_blocks,
-                h_dim=embed_dim,
-                context_len=context_len,
-                n_heads=n_heads,
-                drop_p=dropout_p,
-            ).to(device)
+    model = None
+    if dt_flag:
+        model = DecisionTransformer(
+                    state_dim=state_dim,
+                    act_dim=act_dim,
+                    n_blocks=n_blocks,
+                    h_dim=embed_dim,
+                    context_len=context_len,
+                    n_heads=n_heads,
+                    drop_p=dropout_p,
+                ).to(device)
+    else:
+        assert args.s4_transposed == "True" or args.s4_transposed == "False"
+        model = S4DecisionTransformer(
+                    s4_d_state=args.s4_d_state,
+                    state_dim=state_dim,
+                    act_dim=act_dim,
+                    h_dim=embed_dim,
+                    context_len=context_len,
+                    drop_p=dropout_p,
+                    transposed=(args.s4_transposed == "True")
+                ).to(device)
 
     optimizer = torch.optim.AdamW(
                         model.parameters(),
@@ -250,10 +260,8 @@ def train_dt(args):
     print("=" * 60)
 
 def train(args):
-    if args.model_type == "dt":
+    if args.model_type == "dt" or args.model_type == "s4":
         train_dt(args)
-    elif args.model_type == "s4":
-        train_s4(args)
     else:
         raise ValueError("Invalid argument value. Please use a valid model_type: dt or s4")
 
@@ -289,6 +297,9 @@ if __name__ == "__main__":
     parser.add_argument('--num_updates_per_iter', type=int, default=100)
 
     parser.add_argument('--device', type=str, default='cuda')
+
+    parser.add_argument('--s4_d_state', type=int, default=256)
+    parser.add_argument('--s4_transposed', type=str, default='False')
 
     args = parser.parse_args()
 
