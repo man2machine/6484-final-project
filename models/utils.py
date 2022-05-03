@@ -244,7 +244,7 @@ class S4D4RLTrajectoryDataset(D4RLTrajectoryDataset):
             # sample random index to slice trajectory
             si = random.randint(0, traj_len - self.context_len)
         
-        returns_to_go = torch.from_numpy(traj['returns_to_go'][si : si + self.context_len])
+        returns_to_go = torch.from_numpy(traj['returns_to_go'][si : si + self.context_len][:, np.newaxis])
         states = torch.from_numpy(traj['observations'][si : si + self.context_len])
         actions = torch.from_numpy(traj['actions'][si : si + self.context_len])
         combined_rsa = torch.cat((returns_to_go, states, actions), dim=-1)
