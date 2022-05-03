@@ -776,7 +776,7 @@ class S4(nn.Module):
             activation='gelu', # activation in between SS and FF
             postact=None, # activation after FF
             dropout=0.0,
-            transposed=True, # axis ordering (B, L, D) or (B, D, L)
+            transposed=True, # axis ordering (B, L, H) or (B, H, L)
             verbose=False,
             # SSM Kernel arguments
             **kernel_args,
