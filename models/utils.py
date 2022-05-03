@@ -332,12 +332,12 @@ class S4D4RLTrajectoryDataset(D4RLTrajectoryDataset):
         traj = self.trajectories[idx]
         traj_len = traj['observations'].shape[0]
         si = 0
-
+        
         if traj_len >= self.context_len:
             # sample random index to slice trajectory
             si = random.randint(0, traj_len - self.context_len)
         
-        timesteps = torch.from_numpy(np.arange(self.context_len)[:, np.newaxis])
+        timesteps = torch.from_numpy(np.arange(si, si + self.context_len)[:, np.newaxis])
         returns_to_go = torch.from_numpy(traj['returns_to_go'][si : si + self.context_len][:, np.newaxis])
         states = torch.from_numpy(traj['observations'][si : si + self.context_len])
         actions = torch.from_numpy(traj['actions'][si : si + self.context_len])
