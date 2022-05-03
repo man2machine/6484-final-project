@@ -6,3 +6,7 @@ defaults:
 model:
   transposed: False
   d_model: 2
+
+trainer:
+  max_epochs: 2000
+  
