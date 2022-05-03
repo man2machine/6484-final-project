@@ -5,4 +5,4 @@ defaults:
 
 model:
   transposed: False
-  
+  d_model: 8
