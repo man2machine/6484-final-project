@@ -17,7 +17,7 @@ from models.dt_model import DecisionTransformer
 from models.dt_model_s4 import S4DecisionTransformer
 from models.dt_model_lstm import LSTMDecisionTransformer
 
-def train_dt(dt_flag, args):
+def train_dt(args):
 
     dataset = args.dataset          # medium / medium-replay / medium-expert
     rtg_scale = args.rtg_scale      # normalize returns to go
