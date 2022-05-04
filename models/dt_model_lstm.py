@@ -71,7 +71,7 @@ class LSTMDecisionTransformer(nn.Module):
         h = self.embed_ln(h)
 
         # transformer and prediction
-        h = self.transformer(h)
+        h = self.seq_model(h)
 
         # get h reshaped such that its size = (B x 3 x T x h_dim) and
         # h[:, 0, t] is conditioned on r_0, s_0, a_0 ... r_t
