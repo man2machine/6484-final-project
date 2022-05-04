@@ -15,6 +15,7 @@ from torch.utils.data import DataLoader
 from models.utils import D4RLTrajectoryDataset, evaluate_on_env, get_d4rl_normalized_score
 from models.dt_model import DecisionTransformer
 from models.dt_model_s4 import S4DecisionTransformer
+from models.dt_model_lstm import LSTMDecisionTransformer
 
 def train_dt(dt_flag, args):
 
@@ -81,10 +82,12 @@ def train_dt(dt_flag, args):
     start_time_str = start_time.strftime("%y-%m-%d-%H-%M-%S")
 
     prefix = env_d4rl_name
-    if dt_flag:
+    if args.model_type == "dt":
         prefix = "dt_" + env_d4rl_name
-    else:
+    elif args.model_type == "s4":
         prefix = "s4_dt_" + env_d4rl_name
+    elif args.model_type == "lstm":
+        prefix = "lstm_dt_" + env_d4rl_name
 
     if rtg_sparse_flag:
         save_model_name =  prefix + "_sparse_model_" + start_time_str + ".pt"
@@ -133,7 +136,7 @@ def train_dt(dt_flag, args):
     act_dim = env.action_space.shape[0]
 
     model = None
-    if dt_flag:
+    if args.model_type == "dt":
         model = DecisionTransformer(
                     state_dim=state_dim,
                     act_dim=act_dim,
@@ -143,7 +146,7 @@ def train_dt(dt_flag, args):
                     n_heads=n_heads,
                     drop_p=dropout_p,
                 ).to(device)
-    else:
+    elif args.model_type == "s4":
         assert args.s4_transposed == "True" or args.s4_transposed == "False"
         model = S4DecisionTransformer(
                     s4_d_state=args.s4_d_state,
@@ -153,6 +156,14 @@ def train_dt(dt_flag, args):
                     context_len=context_len,
                     drop_p=dropout_p,
                     transposed=(args.s4_transposed == "True")
+                ).to(device)
+    else:
+        model = LSTMDecisionTransformer(state_dim=state_dim,
+                    act_dim=act_dim,
+                    n_blocks=n_blocks,
+                    h_dim=embed_dim,
+                    context_len=context_len,
+                    drop_p=dropout_p,
                 ).to(device)
 
     optimizer = torch.optim.AdamW(
@@ -264,8 +275,8 @@ def train_dt(dt_flag, args):
     print("=" * 60)
 
 def train(args):
-    if args.model_type == "dt" or args.model_type == "s4":
-        train_dt(args.model_type == "dt", args)
+    if args.model_type == "dt" or args.model_type == "s4" or args.model_type == "lstm":
+        train_dt(args)
     else:
         raise ValueError("Invalid argument value. Please use a valid model_type: dt or s4")
 
