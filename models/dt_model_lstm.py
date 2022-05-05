@@ -27,7 +27,7 @@ class LSTMDecisionTransformer(nn.Module):
         ### transformer blocks
         seq_len = 3 * context_len
         self.seq_model = nn.LSTM(input_size=seq_len, hidden_size=h_dim, dropout=drop_p,
-            num_layers=n_blocks, batch_first=True, bidirectional=False)
+            num_layers=n_blocks, batch_first=False, bidirectional=False)
 
         ### projection heads (project to embedding)
         self.embed_ln = nn.LayerNorm(h_dim)
