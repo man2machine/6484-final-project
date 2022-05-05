@@ -229,12 +229,12 @@ class D4RLTrajectoryDataset(Dataset):
             traj_len = traj['observations'].shape[0]
             min_len = min(min_len, traj_len)
             states.append(traj['observations'])
-            # If sparse rewards to go, set returns to go to be the same each time, except for the last edge. This should make problem hard
-            if rtg_sparse_flag:
-                traj['rewards'][-1] = traj['rewards'].sum()
-                traj['rewards'][:-1] = 0
             # calculate returns to go and rescale them
             traj['returns_to_go'] = discount_cumsum(traj['rewards'], 1.0) / rtg_scale
+            # If sparse rewards to go, set returns to go to be the same each time, except for the last edge. This should make problem hard
+            if rtg_sparse_flag:
+                traj['returns_to_go'][:-1] = traj['returns_to_go'][0]
+                traj['returns_to_go'][-1] = 0
 
         # used for input normalization
         states = np.concatenate(states, axis=0)

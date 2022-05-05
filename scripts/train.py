@@ -158,7 +158,8 @@ def train_dt(args):
                     transposed=(args.s4_transposed == "True")
                 ).to(device)
     else:
-        model = LSTMDecisionTransformer(state_dim=state_dim,
+        model = LSTMDecisionTransformer(
+                    state_dim=state_dim,
                     act_dim=act_dim,
                     n_blocks=n_blocks,
                     h_dim=embed_dim,
